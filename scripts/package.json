@@ -10,6 +10,7 @@
   "description": "",
   "dependencies": {
     "circomlibjs": "^0.1.7",
-    "ethers": "^6.15.0"
+    "ethers": "^6.15.0",
+    "snarkjs": "^0.7.5"
   }
 }

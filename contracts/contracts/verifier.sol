@@ -37,14 +37,41 @@ contract Groth16Verifier {
     uint256 constant gammax2 = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
     uint256 constant gammay1 = 4082367875863433681332203403145435568316851327593401208105741076214120093531;
     uint256 constant gammay2 = 8495653923123431417604973247489272438418190587263600148770280649306958101930;
-    uint256 constant deltax1 = 11559732032986387107991004021392285783925812861821192530917403151452391805634;
-    uint256 constant deltax2 = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
-    uint256 constant deltay1 = 4082367875863433681332203403145435568316851327593401208105741076214120093531;
-    uint256 constant deltay2 = 8495653923123431417604973247489272438418190587263600148770280649306958101930;
+    uint256 constant deltax1 = 185320267173199953514740373003129911119602960986906757925219741706889662471;
+    uint256 constant deltax2 = 19010019470562589006479790965058037837808874348798356225357719028285439089554;
+    uint256 constant deltay1 = 5706712728149795206455463457801195889846641986597454418807002053026437857647;
+    uint256 constant deltay2 = 15346227762137506609987875209129848894877960982672760757124183827324892263237;
 
     
     uint256 constant IC0x = 6521287588264266280251158383835222647942900628158729150519222396398842283264;
     uint256 constant IC0y = 2373773239888213267866994556789574579602391492194923382271070570929089170487;
+    
+    uint256 constant IC1x = 2546708288702909096749815083070780357149514642790050931325592366275492354868;
+    uint256 constant IC1y = 21043798474119276466213508406469443302182310245370245153755358001695682157735;
+    
+    uint256 constant IC2x = 10216835525513472042233861504796956331238414216666101981606766960099060398064;
+    uint256 constant IC2y = 11774112831879276761175251209986472329657243161411690768843483662031011147035;
+    
+    uint256 constant IC3x = 5581153634152359036908213922713440845703010894706489790861935522493066297232;
+    uint256 constant IC3y = 2122986692045499260348817155612148591238504616396990802649136231484307765556;
+    
+    uint256 constant IC4x = 11098110986637353271689833554774317530030945429843240141979589658695528840213;
+    uint256 constant IC4y = 9927889413447390623250257417342121738240345306830635360486197432094576395419;
+    
+    uint256 constant IC5x = 18434399572938600229316679194668363364897911287260249917394694940940567286441;
+    uint256 constant IC5y = 8828469190381194060985869141198177579162430226323080538177995919115850635229;
+    
+    uint256 constant IC6x = 14467723612574201403437913224167085111912020545259078825812187297035368193866;
+    uint256 constant IC6y = 18538061190078193593091084463779979698810394772366109909368802644297925337848;
+    
+    uint256 constant IC7x = 3789308868863927615369696711457524627744790477866682586193869388016417941952;
+    uint256 constant IC7y = 11150742933919620648402005820081044002263163544587036713042943873451324469169;
+    
+    uint256 constant IC8x = 7199688402213271841661302976886773207182663828548905599266303143650799494714;
+    uint256 constant IC8y = 5041851346443056110180879658605128182030084632434269266932008220405110943775;
+    
+    uint256 constant IC9x = 19899222771883323782206334634237611084457695149417984591346620684725388114959;
+    uint256 constant IC9y = 5869946138244310471863694816685722276824536029511989754505693379317993757764;
     
  
     // Memory data
@@ -53,7 +80,7 @@ contract Groth16Verifier {
 
     uint16 constant pLastMem = 896;
 
-    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[0] calldata _pubSignals) public view returns (bool) {
+    function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[9] calldata _pubSignals) public view returns (bool) {
         assembly {
             function checkField(v) {
                 if iszero(lt(v, r)) {
@@ -96,6 +123,24 @@ contract Groth16Verifier {
                 mstore(add(_pVk, 32), IC0y)
 
                 // Compute the linear combination vk_x
+                
+                g1_mulAccC(_pVk, IC1x, IC1y, calldataload(add(pubSignals, 0)))
+                
+                g1_mulAccC(_pVk, IC2x, IC2y, calldataload(add(pubSignals, 32)))
+                
+                g1_mulAccC(_pVk, IC3x, IC3y, calldataload(add(pubSignals, 64)))
+                
+                g1_mulAccC(_pVk, IC4x, IC4y, calldataload(add(pubSignals, 96)))
+                
+                g1_mulAccC(_pVk, IC5x, IC5y, calldataload(add(pubSignals, 128)))
+                
+                g1_mulAccC(_pVk, IC6x, IC6y, calldataload(add(pubSignals, 160)))
+                
+                g1_mulAccC(_pVk, IC7x, IC7y, calldataload(add(pubSignals, 192)))
+                
+                g1_mulAccC(_pVk, IC8x, IC8y, calldataload(add(pubSignals, 224)))
+                
+                g1_mulAccC(_pVk, IC9x, IC9y, calldataload(add(pubSignals, 256)))
                 
 
                 // -A
@@ -149,6 +194,24 @@ contract Groth16Verifier {
             mstore(0x40, add(pMem, pLastMem))
 
             // Validate that all evaluations ∈ F
+            
+            checkField(calldataload(add(_pubSignals, 0)))
+            
+            checkField(calldataload(add(_pubSignals, 32)))
+            
+            checkField(calldataload(add(_pubSignals, 64)))
+            
+            checkField(calldataload(add(_pubSignals, 96)))
+            
+            checkField(calldataload(add(_pubSignals, 128)))
+            
+            checkField(calldataload(add(_pubSignals, 160)))
+            
+            checkField(calldataload(add(_pubSignals, 192)))
+            
+            checkField(calldataload(add(_pubSignals, 224)))
+            
+            checkField(calldataload(add(_pubSignals, 256)))
             
 
             // Validate all evaluations

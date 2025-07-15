@@ -6,8 +6,8 @@ contract ProfileRegistry {
 
     event ProfileRegistered(address indexed user, uint256 commitment);
 
-    function registerProfile(uint256 commitment) external {
-        require(commitments[msg.sender] == 0, "Already registered");
+    function registerProfile(uint256 commitment) public {
+        require(commitments[msg.sender] == 0, "Already Registered");
         commitments[msg.sender] = commitment;
         emit ProfileRegistered(msg.sender, commitment);
     }
