@@ -1,7 +1,7 @@
 # JuliETH: Privacy-Preserving Dating
 
-This is a toy app for playing aroung with zkSNARKs, commitments, and smart contracts.  
-Built with ❤️ using [circom](https://github.com/iden3/circom) + [snarkjs](https://github.com/iden3/snarkjs).  
+*This is a toy app for playing aroung with zkSNARKs, commitments, and smart contracts.*  
+*Built with ❤️ using [circom](https://github.com/iden3/circom) + [snarkjs](https://github.com/iden3/snarkjs).*  
 
 [▶️ See the demo on YouTube](https://youtu.be/0AZao5kEs-o)
 
