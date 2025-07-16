@@ -101,14 +101,14 @@ async function main() {
   // 2. verify in match registry
 
   const tx = await MatchRegistry.verifyMatch(bob_wallet.address, a, b, c);
-  const receipt = await tx.wait();
+  // await tx.wait();
 
   // check result
-  const matches = await MatchRegistry.matches(bob_wallet.address);
-  const isMatched = matches.map(addr => addr.toLowerCase()).includes(alice_wallet.address.toLowerCase()); // true
+  const isMatched = await MatchRegistry.getMatches(bob_wallet.address); // true
+  // const isMatched = matches.map(addr => addr.toLowerCase()).includes(alice_wallet.address.toLowerCase()); // true
 
   if (isMatched) {
-    console.log(`✅ Alice (${alice_wallet.address}) is now matched with Bob (${bob_wallet.address})!`);
+    console.log(`Alice (${alice_wallet.address}) is now matched with Bob (${bob_wallet.address})!`);
   } else {
     console.log(`Alice is NOT matched with Bob.`);
   }

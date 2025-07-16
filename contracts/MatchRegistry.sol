@@ -32,7 +32,7 @@ contract MatchRegistry {
         verifier = IVerifier(_verifier);
     }
 
-    function verifyMatch(address potentialMatch, uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC) public returns (bool) {
+    function verifyMatch(address potentialMatch, uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC) public view returns (bool) {
         uint256[9] memory input;
         input[0] = profileRegistry.commitments(msg.sender);
         require(input[0] != 0, "Not Registered");
@@ -51,9 +51,13 @@ contract MatchRegistry {
         }
 
         if (verifier.verifyProof(_pA, _pB, _pC, input)) {
-            matches[potentialMatch].push(msg.sender);
+            // matches[potentialMatch].push(msg.sender);
             return true;
         }
         return false;
+    }
+
+    function getMatches(address user) public view returns (address[] memory) {
+        return matches[user];
     }
 }
