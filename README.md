@@ -7,7 +7,7 @@ Built with ❤️ using [circom](https://github.com/iden3/circom) + [snarkjs](ht
 
 ## Overview
 
-See the process [here](./JuliEth%20Show%20+%20Tell.pdf).
+See the process [here](./JuliETH%20Show%20%2B%20Tell.pdf).
 
 1. **Commit Profile:** Users generate commitments to profile attributes (i.e. age, gender, location, occupation, etc.) and register commitment to an on-chain registry `ProfileRegistry.sol`.
 2. **Register Preferences:** Users register their preferences (desired qualities in a match) to an on-chain registry `PreferencesRegistry.sol`.
