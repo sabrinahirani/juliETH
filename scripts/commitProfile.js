@@ -3,9 +3,13 @@ const ethers = require("ethers");
 const path = require("path");
 const fs = require("fs");
 
+// utils
 const { getContract, getAliceWallet, getBobWallet } = require("./utils");
 
 async function main() {
+
+  // 1. generate commitment
+
   const poseidon = await circomlib.buildPoseidon();
   const F = poseidon.F;
 
@@ -23,17 +27,17 @@ async function main() {
 
   console.log("Commitment (as decimal string):", F.toString(hash));
 
-  // using local
-  const alice_wallet = getAliceWallet();
-  const bob_wallet = getBobWallet();
+  // 2. register commitment to profile registry
 
+  const alice_wallet = getAliceWallet();
   const ProfileRegistry = getContract("ProfileRegistry", alice_wallet);
-  const PreferencesRegistry = getContract("PreferencesRegistry", bob_wallet);
 
   // register profile
   const tx1 = await ProfileRegistry.registerProfile(commitment);
   await tx1.wait();
-  console.log("Profile committed on-chain.");
+  console.log("Profile Committed.");
+
+  // 3. register preferences to preferences registry
 
   // TODO: example preferences
   const minAge = 18;
@@ -42,11 +46,15 @@ async function main() {
   const desiredLocation = 12;
   const desiredOccupation = 3;
   const desiredHobby = 5;
+  // note: example profile is a match
+
+  const bob_wallet = getBobWallet();
+  const PreferencesRegistry = getContract("PreferencesRegistry", bob_wallet);
 
   // register preferences
   const tx2 = await PreferencesRegistry.setPreferences(minAge, maxAge, acceptedGenders, desiredLocation, desiredOccupation, desiredHobby);
   await tx2.wait();
-  console.log("Preferences registered on-chain.");
+  console.log("Preferences Registered.");
 }
 
 main();
