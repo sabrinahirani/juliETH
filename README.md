@@ -3,7 +3,7 @@
 This is a toy app for playing aroung with zkSNARKs, commitments, and smart contracts.  
 Built with ❤️ using [circom](https://github.com/iden3/circom) + [snarkjs](https://github.com/iden3/snarkjs).  
 
-[▶️ Watch the demo on YouTube](https://youtu.be/0AZao5kEs-o)
+[▶️ See the demo on YouTube](https://youtu.be/0AZao5kEs-o)
 
 ## Overview
 
@@ -90,8 +90,6 @@ See the process [here](https://your-slides-link.com).
       return verifier.verifyProof(a, b, c, input);
   }
   ```
-
----
 
 ## Getting Started
 
