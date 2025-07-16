@@ -3,6 +3,8 @@ const ethers = require("ethers");
 const path = require("path");
 const fs = require("fs");
 
+const { getContract, getAliceWallet, getBobWallet } = require("./utils");
+
 async function main() {
   const poseidon = await circomlib.buildPoseidon();
   const F = poseidon.F;
@@ -22,22 +24,11 @@ async function main() {
   console.log("Commitment (as decimal string):", F.toString(hash));
 
   // using local
-  const provider = new ethers.JsonRpcProvider("http://localhost:8545"); 
-  const ALICE_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-  const alice_wallet = new ethers.Wallet(ALICE_PRIVATE_KEY, provider);
-  const BOB_PRIVATE_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
-  const bob_wallet = new ethers.Wallet(BOB_PRIVATE_KEY, provider);
+  const alice_wallet = getAliceWallet();
+  const bob_wallet = getBobWallet();
 
-  const loadDeployment = (name) => {
-    const file = path.join(__dirname, "deployments", `${name}.json`);
-    return JSON.parse(fs.readFileSync(file, "utf-8"));
-  };
-
-  const profileDeployment = loadDeployment("ProfileRegistry");
-  const preferencesDeployment = loadDeployment("PreferencesRegistry");
-
-  const ProfileRegistry = new ethers.Contract(profileDeployment.address, profileDeployment.abi, alice_wallet);
-  const PreferencesRegistry = new ethers.Contract(preferencesDeployment.address, preferencesDeployment.abi, bob_wallet);
+  const ProfileRegistry = getContract("ProfileRegistry", alice_wallet);
+  const PreferencesRegistry = getContract("PreferencesRegistry", bob_wallet);
 
   // register profile
   const tx1 = await ProfileRegistry.registerProfile(commitment);
