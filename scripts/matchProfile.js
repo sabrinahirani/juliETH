@@ -41,21 +41,23 @@ async function main() {
 
   const prefs = await PreferencesRegistry.getPreferences(bob_wallet.address);
 
-  const min_age = prefs.minAge;
-  const max_age = prefs.maxAge;
-  const accepted_genders = prefs.acceptedGenders.map((g) => Number(g)); // [uint8, uint8, uint8]
-  const target_location = prefs.desiredLocation;
-  const target_occupation = prefs.desiredOccupation;
-  const target_hobby = prefs.desiredHobby;
+  const min_age = Number(prefs.minAge);
+  const max_age = Number(prefs.maxAge);
+  let accepted_genders = prefs.acceptedGenders.map((g) => Number(g)); // [uint8, uint8, uint8]
+  // Ensure accepted_genders is always length 3
+  while (accepted_genders.length < 3) accepted_genders.push(0);
+  const target_location = Number(prefs.desiredLocation);
+  const target_occupation = Number(prefs.desiredOccupation);
+  const target_hobby = Number(prefs.desiredHobby);
 
   const input = {
-    age,
-    gender,
-    location,
-    occupation,
-    hobby,
-    nonce,
-    commitment,
+    age: Number(age),
+    gender: Number(gender),
+    location: Number(location),
+    occupation: Number(occupation),
+    hobby: Number(hobby),
+    nonce: Number(nonce),
+    commitment: F.toString(hash),
     min_age,
     max_age,
     accepted_genders,
@@ -65,8 +67,8 @@ async function main() {
   };
 
   // load wasm and zkey
-  const wasmPath = "../build/match_profile_js/match_profile.wasm";
-  const zkeyPath = "../build/match_profile_final.zkey";
+  const wasmPath = "build/match_profile_js/match_profile.wasm";
+  const zkeyPath = "build/match_profile_final.zkey";
 
   // generate proof
   const { proof, publicSignals } = await snarkjs.groth16.fullProve(
@@ -95,8 +97,30 @@ async function main() {
   ];
   const c = [argv[6], argv[7]];
 
-  const tx = await matchRegistry.verifyMatch(BOB_ADDRESS, a, b, c);
+  const tx = await MatchRegistry.verifyMatch(bob_wallet.address, a, b, c);
   const receipt = await tx.wait();
+
+  // Parse the MatchVerified event from the receipt logs
+  const eventAbi = MatchRegistry.interface.getEvent("MatchVerified");
+  const eventFragment = MatchRegistry.interface.getEvent("MatchVerified");
+  let matchResult = null;
+  for (const log of receipt.logs) {
+    try {
+      const parsed = MatchRegistry.interface.parseLog(log);
+      if (parsed.name === "MatchVerified") {
+        matchResult = parsed.args.result;
+        console.log(`MatchVerified event: potentialMatch=${parsed.args.potentialMatch}, sender=${parsed.args.sender}, result=${parsed.args.result}`);
+        break;
+      }
+    } catch (e) {
+      // Not a MatchVerified event, skip
+    }
+  }
+  if (matchResult !== null) {
+    console.log("✅ Match verification result:", matchResult);
+  } else {
+    console.log("❌ MatchVerified event not found in transaction logs.");
+  }
 
   console.log("✅ Match verification transaction sent. Tx hash:", receipt.transactionHash);
 }
