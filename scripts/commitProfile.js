@@ -20,7 +20,9 @@ const publicClient = createPublicClient({
 });
 
 async function main() {
+  
   // 1. generate commitment
+  
   const poseidon = await circomlib.buildPoseidon();
   const F = poseidon.F;
 
@@ -46,19 +48,6 @@ async function main() {
     functionName: "registerProfile",
     args: [commitment],
   });
-
-  // Debug: try a read-only call to see if it would revert
-  try {
-    const result = await publicClient.call({
-      to: profileDeployment.address,
-      data: registerProfileData,
-      account: alice.address,
-    });
-    console.log("registerProfile call result:", result);
-  } catch (err) {
-    console.error("registerProfile call error:", err);
-  }
-
   const profileTxHash = await cdp.evm.sendTransaction({
     address: alice.address,
     network: "ethereum-sepolia",
@@ -87,7 +76,7 @@ async function main() {
     functionName: "setPreferences",
     args: [minAge, maxAge, acceptedGenders, desiredLocation, desiredOccupation, desiredHobby],
   });
-  const prefsTxHash = await cdp.evm.sendTransaction({
+  const prefTxHash = await cdp.evm.sendTransaction({
     address: bob.address,
     network: "ethereum-sepolia",
     transaction: {
@@ -95,7 +84,7 @@ async function main() {
       data: setPreferencesData,
     },
   });
-  console.log("Preferences Registered. Transaction hash:", prefsTxHash);
+  console.log("Preferences Registered. Transaction hash:", prefTxHash);
 }
 
 main();

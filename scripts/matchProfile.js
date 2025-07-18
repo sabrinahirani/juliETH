@@ -49,39 +49,15 @@ async function main() {
   const preferencesDeployment = loadDeployment("PreferencesRegistry");
   const matchDeployment = loadDeployment("MatchRegistry");
 
-  // 1.3 get preferences from registry (read-only call)
-  // const getPreferencesData = encodeFunctionData({
-  //   abi: preferencesDeployment.abi,
-  //   functionName: "getPreferences",
-  //   args: [bob.address],
-  // });
-  // const preferencesResult = await publicClient.call({
-  //   to: preferencesDeployment.address,
-  //   data: getPreferencesData,
-  // });
-  // // decode result
-  // const [
-  //   min_age,
-  //   max_age,
-  //   accepted_genders,
-  //   desired_location,
-  //   desired_occupation,
-  //   desired_hobby,
-  //   exists
-  // ] = decodeFunctionResult({
-  //   abi: preferencesDeployment.abi,
-  //   functionName: "getPreferences",
-  //   data: preferencesResult.data,
-  // });
+  // 1.3 construct input
 
-  // 1.4 construct input
-
-  const min_age = 18;
-  const max_age = 35;
+  // same preferences
+  const min_age = Number(18);
+  const max_age = Number(35);
   const accepted_genders = [1, 2, 3];
-  const desired_location = 12;
-  const desired_occupation = 3;
-  const desired_hobby = 5;
+  const desired_location = Number(12);
+  const desired_occupation = Number(3);
+  const desired_hobby = Number(5);
 
   const input = {
     age,
@@ -91,12 +67,12 @@ async function main() {
     hobby,
     nonce,
     commitment,
-    min_age: Number(min_age),
-    max_age: Number(max_age),
+    min_age,
+    max_age,
     accepted_genders,
-    desired_location: Number(desired_location),
-    desired_occupation: Number(desired_occupation),
-    desired_hobby: Number(desired_hobby),
+    desired_location,
+    desired_occupation,
+    desired_hobby,
   };
 
   // load wasm and zkey
@@ -132,7 +108,7 @@ async function main() {
   ];
   const c = [argv[6], argv[7]];
 
-  // 2. verify in match registry (send transaction)
+  // 2. verify in match registry
   const verifyMatchData = encodeFunctionData({
     abi: matchDeployment.abi,
     functionName: "verifyMatch",
@@ -172,22 +148,16 @@ async function main() {
     account: alice.address
   });
   
-  let decoded;
-  try {
-    decoded = decodeFunctionResult({
-      abi: matchDeployment.abi,
-      functionName: "getMatches",
-      data: matchesResult.data,
-    });
-    console.log("Decoded matches (raw):", decoded);
-  } catch (err) {
-    console.error("Decoding failed:", err);
-  }
+  let decoded = decodeFunctionResult({
+    abi: matchDeployment.abi,
+    functionName: "getMatches",
+    data: matchesResult.data,
+  });
   
-  // Ensure we handle different formats
-  let matchedAddresses = decoded[0]; // Usually this is an array
+  // handle different formats
+  let matchedAddresses = decoded[0]; 
   if (!Array.isArray(matchedAddresses)) {
-    matchedAddresses = [matchedAddresses]; // wrap in array if not already
+    matchedAddresses = [matchedAddresses]; 
   }
   
   const isMatched = matchedAddresses
