@@ -1,15 +1,26 @@
-const circomlib = require("circomlibjs");
-const ethers = require("ethers");
-const path = require("path");
-const fs = require("fs");
+import { encodeFunctionData, createPublicClient, http } from "viem";
+import { sepolia } from "viem/chains";
+import * as circomlib from "circomlibjs";
+import { loadDeployment, getAliceAccount, getBobAccount } from "./utils.js";
+import dotenv from "dotenv";
 
-// utils
-const { getContract, getAliceWallet, getBobWallet } = require("./utils");
+import { CdpClient } from "@coinbase/cdp-sdk"; // using cdp-sdk
+
+dotenv.config();
+
+const cdp = new CdpClient({
+  apiKeyId: process.env.CDP_API_KEY_ID,
+  apiKeySecret: process.env.CDP_API_KEY_SECRET,
+  walletSecret: process.env.CDP_WALLET_SECRET,
+});
+
+const publicClient = createPublicClient({
+  chain: sepolia,
+  transport: http(),
+});
 
 async function main() {
-
   // 1. generate commitment
-
   const poseidon = await circomlib.buildPoseidon();
   const F = poseidon.F;
 
@@ -28,14 +39,35 @@ async function main() {
   console.log("Commitment (as decimal string):", F.toString(hash));
 
   // 2. register commitment to profile registry
+  const alice = await getAliceAccount();
+  const profileDeployment = loadDeployment("ProfileRegistry");
+  const registerProfileData = encodeFunctionData({
+    abi: profileDeployment.abi,
+    functionName: "registerProfile",
+    args: [commitment],
+  });
 
-  const alice_wallet = getAliceWallet();
-  const ProfileRegistry = getContract("ProfileRegistry", alice_wallet);
+  // Debug: try a read-only call to see if it would revert
+  try {
+    const result = await publicClient.call({
+      to: profileDeployment.address,
+      data: registerProfileData,
+      account: alice.address,
+    });
+    console.log("registerProfile call result:", result);
+  } catch (err) {
+    console.error("registerProfile call error:", err);
+  }
 
-  // register profile
-  const tx1 = await ProfileRegistry.registerProfile(commitment);
-  await tx1.wait();
-  console.log("Profile Committed.");
+  const profileTxHash = await cdp.evm.sendTransaction({
+    address: alice.address,
+    network: "ethereum-sepolia",
+    transaction: {
+      to: profileDeployment.address,
+      data: registerProfileData,
+    },
+  });
+  console.log("Profile Committed. Transaction hash:", profileTxHash);
 
   // 3. register preferences to preferences registry
 
@@ -48,13 +80,22 @@ async function main() {
   const desiredHobby = 5;
   // note: example profile is a match
 
-  const bob_wallet = getBobWallet();
-  const PreferencesRegistry = getContract("PreferencesRegistry", bob_wallet);
-
-  // register preferences
-  const tx2 = await PreferencesRegistry.setPreferences(minAge, maxAge, acceptedGenders, desiredLocation, desiredOccupation, desiredHobby);
-  await tx2.wait();
-  console.log("Preferences Registered.");
+  const bob = await getBobAccount();
+  const preferencesDeployment = loadDeployment("PreferencesRegistry");
+  const setPreferencesData = encodeFunctionData({
+    abi: preferencesDeployment.abi,
+    functionName: "setPreferences",
+    args: [minAge, maxAge, acceptedGenders, desiredLocation, desiredOccupation, desiredHobby],
+  });
+  const prefsTxHash = await cdp.evm.sendTransaction({
+    address: bob.address,
+    network: "ethereum-sepolia",
+    transaction: {
+      to: preferencesDeployment.address,
+      data: setPreferencesData,
+    },
+  });
+  console.log("Preferences Registered. Transaction hash:", prefsTxHash);
 }
 
 main();

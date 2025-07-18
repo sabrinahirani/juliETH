@@ -8,11 +8,13 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "type": "module",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.0.0",
     "hardhat": "^2.25.0"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.26.0",
     "circomlibjs": "^0.1.7",
     "dotenv": "^17.2.0",
     "ethers": "^6.15.0",

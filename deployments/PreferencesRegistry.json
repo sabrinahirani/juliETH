@@ -1,0 +1,105 @@
+{
+  "address": "0x66b511945Eb254b9C13fe13D50aed925c6Be236d",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "PreferencesRegistered",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "getPreferences",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "minAge",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "maxAge",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8[3]",
+          "name": "acceptedGenders",
+          "type": "uint8[3]"
+        },
+        {
+          "internalType": "uint8",
+          "name": "desiredLocation",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "desiredOccupation",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "desiredHobby",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bool",
+          "name": "exists",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "minAge",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "maxAge",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8[3]",
+          "name": "acceptedGenders",
+          "type": "uint8[3]"
+        },
+        {
+          "internalType": "uint8",
+          "name": "desiredLocation",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "desiredOccupation",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "desiredHobby",
+          "type": "uint8"
+        }
+      ],
+      "name": "setPreferences",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}

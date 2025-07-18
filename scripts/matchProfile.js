@@ -1,11 +1,25 @@
-const circomlib = require("circomlibjs");
-const snarkjs = require("snarkjs");
-const { ethers } = require("ethers");
-const path = require("path");
-const fs = require("fs");
+import * as circomlib from "circomlibjs";
+import * as snarkjs from "snarkjs";
+import { encodeFunctionData, decodeFunctionResult, createPublicClient, http } from "viem";
+import { sepolia } from "viem/chains";
+import { loadDeployment, getAliceAccount, getBobAccount } from "./utils.js";
+import dotenv from "dotenv";
+import fs from "fs";
 
-// utils
-const { getContract, getAliceWallet, getBobWallet } = require("./utils");
+import { CdpClient } from "@coinbase/cdp-sdk"; // using cdp-sdk
+
+dotenv.config();
+
+const cdp = new CdpClient({
+  apiKeyId: process.env.CDP_API_KEY_ID,
+  apiKeySecret: process.env.CDP_API_KEY_SECRET,
+  walletSecret: process.env.CDP_WALLET_SECRET,
+});
+
+const publicClient = createPublicClient({
+  chain: sepolia,
+  transport: http(),
+});
 
 async function main() {
 
@@ -30,24 +44,44 @@ async function main() {
   console.log("Commitment (as decimal string):", commitment);
 
   // 1.2 some setup
+  const alice = await getAliceAccount();
+  const bob = await getBobAccount();
+  const preferencesDeployment = loadDeployment("PreferencesRegistry");
+  const matchDeployment = loadDeployment("MatchRegistry");
 
-  const alice_wallet = getAliceWallet();
-  const bob_wallet = getBobWallet();
-  const PreferencesRegistry = getContract("PreferencesRegistry", alice_wallet);
-  const MatchRegistry = getContract("MatchRegistry", alice_wallet);
-
-  // 1.3 get preferences from registry
-
-  const preferences = await PreferencesRegistry.getPreferences(bob_wallet.address);
-
-  const min_age = Number(preferences.minAge);
-  const max_age = Number(preferences.maxAge);
-  let accepted_genders = preferences.acceptedGenders.map((g) => Number(g));
-  const desired_location = Number(preferences.desiredLocation);
-  const desired_occupation = Number(preferences.desiredOccupation);
-  const desired_hobby = Number(preferences.desiredHobby);
+  // 1.3 get preferences from registry (read-only call)
+  // const getPreferencesData = encodeFunctionData({
+  //   abi: preferencesDeployment.abi,
+  //   functionName: "getPreferences",
+  //   args: [bob.address],
+  // });
+  // const preferencesResult = await publicClient.call({
+  //   to: preferencesDeployment.address,
+  //   data: getPreferencesData,
+  // });
+  // // decode result
+  // const [
+  //   min_age,
+  //   max_age,
+  //   accepted_genders,
+  //   desired_location,
+  //   desired_occupation,
+  //   desired_hobby,
+  //   exists
+  // ] = decodeFunctionResult({
+  //   abi: preferencesDeployment.abi,
+  //   functionName: "getPreferences",
+  //   data: preferencesResult.data,
+  // });
 
   // 1.4 construct input
+
+  const min_age = 18;
+  const max_age = 35;
+  const accepted_genders = [1, 2, 3];
+  const desired_location = 12;
+  const desired_occupation = 3;
+  const desired_hobby = 5;
 
   const input = {
     age,
@@ -57,12 +91,12 @@ async function main() {
     hobby,
     nonce,
     commitment,
-    min_age,
-    max_age,
+    min_age: Number(min_age),
+    max_age: Number(max_age),
     accepted_genders,
-    desired_location,
-    desired_occupation,
-    desired_hobby,
+    desired_location: Number(desired_location),
+    desired_occupation: Number(desired_occupation),
+    desired_hobby: Number(desired_hobby),
   };
 
   // load wasm and zkey
@@ -98,21 +132,73 @@ async function main() {
   ];
   const c = [argv[6], argv[7]];
 
-  // 2. verify in match registry
-
-  const tx = await MatchRegistry.verifyMatch(bob_wallet.address, a, b, c);
-  // await tx.wait();
-
-  // check result
-  const isMatched = await MatchRegistry.getMatches(bob_wallet.address); // true
-  // const isMatched = matches.map(addr => addr.toLowerCase()).includes(alice_wallet.address.toLowerCase()); // true
-
+  // 2. verify in match registry (send transaction)
+  const verifyMatchData = encodeFunctionData({
+    abi: matchDeployment.abi,
+    functionName: "verifyMatch",
+    args: [bob.address, a, b, c],
+  });
+  
+  const txResult = await cdp.evm.sendTransaction({
+    address: alice.address,
+    network: "ethereum-sepolia",
+    transaction: {
+      to: matchDeployment.address,
+      data: verifyMatchData,
+    },
+  });
+  
+  console.log("verifyMatch transaction result:", txResult);
+  const txHash = txResult.transactionHash;
+  console.log("Submitted tx hash:", txHash);
+  
+  // wait for confirmation
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash: txHash,
+  });
+  
+  console.log("Transaction confirmed in block:", receipt.blockNumber);
+  
+  // now check match registry
+  const getMatchesData = encodeFunctionData({
+    abi: matchDeployment.abi,
+    functionName: "getMatches",
+    args: [bob.address],
+  });
+  
+  const matchesResult = await publicClient.call({
+    to: matchDeployment.address,
+    data: getMatchesData,
+    account: alice.address
+  });
+  
+  let decoded;
+  try {
+    decoded = decodeFunctionResult({
+      abi: matchDeployment.abi,
+      functionName: "getMatches",
+      data: matchesResult.data,
+    });
+    console.log("Decoded matches (raw):", decoded);
+  } catch (err) {
+    console.error("Decoding failed:", err);
+  }
+  
+  // Ensure we handle different formats
+  let matchedAddresses = decoded[0]; // Usually this is an array
+  if (!Array.isArray(matchedAddresses)) {
+    matchedAddresses = [matchedAddresses]; // wrap in array if not already
+  }
+  
+  const isMatched = matchedAddresses
+    .map(addr => addr.toLowerCase())
+    .includes(alice.address.toLowerCase());
+  
   if (isMatched) {
-    console.log(`Alice (${alice_wallet.address}) is now matched with Bob (${bob_wallet.address})!`);
+    console.log(`Alice (${alice.address}) is now matched with Bob (${bob.address})!`);
   } else {
     console.log(`Alice is NOT matched with Bob.`);
   }
-  
 }
 
 main();
